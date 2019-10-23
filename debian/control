@@ -1,0 +1,13 @@
+Source: ros-dashing-sick-scan2
+Section: misc
+Priority: optional
+Maintainer: Michael Lehning <michael.lehning@lehning.de>
+Build-Depends: debhelper (>= 9.0.0), libboost-all-dev, ros-dashing-ament-cmake, ros-dashing-ament-cmake-gtest, ros-dashing-ament-lint-auto, ros-dashing-ament-lint-common, ros-dashing-diagnostic-updater, ros-dashing-rclcpp, ros-dashing-sensor-msgs, ros-dashing-std-msgs, ros-dashing-ros-workspace
+Homepage: http://wiki.ros.org/sick_scan2
+Standards-Version: 3.9.2
+
+Package: ros-dashing-sick-scan2
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libboost-all-dev, ros-dashing-diagnostic-updater, ros-dashing-rclcpp, ros-dashing-sensor-msgs, ros-dashing-std-msgs, ros-dashing-ros-workspace
+Description: A ROS2 driver for the SICK TiM series of laser scanners.
+ This package is based on the sick_scan-Repository.
