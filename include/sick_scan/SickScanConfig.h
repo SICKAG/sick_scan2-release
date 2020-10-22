@@ -16,11 +16,16 @@ namespace sick_scan
   class SickScanConfig {
   public:
       std::string frame_id;
+      std::string imu_frame_id;
+      bool imu_enable;
       bool intensity;
       bool auto_reboot;
-      float min_ang;
-      float max_ang;
+      double min_ang;
+      double max_ang;
       int skip;
+      bool use_software_pll;
+      bool sw_pll_only_publish;
+
   };
 }
 
