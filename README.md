@@ -1,3 +1,26 @@
+## sick_scan2 (foxy) - 0.1.9-1
+
+The packages in the `sick_scan2` repository were released into the `foxy` distro by running `/usr/bin/bloom-release --rosdistro foxy --track foxy sick_scan2` on `Thu, 22 Oct 2020 12:53:30 -0000`
+
+The `sick_scan2` package was released.
+
+Version of package(s) in repository `sick_scan2`:
+
+- upstream repository: https://github.com/SICKAG/sick_scan2.git
+- release repository: unknown
+- rosdistro version: `null`
+- old version: `0.1.8-3`
+- new version: `0.1.9-1`
+
+Versions of tools used:
+
+- bloom version: `0.10.0`
+- catkin_pkg version: `0.4.22`
+- rosdep version: `0.19.0`
+- rosdistro version: `0.8.2`
+- vcstools version: `0.1.42`
+
+
 ## sick_scan2 (eloquent) - 0.1.8-1
 
 The packages in the `sick_scan2` repository were released into the `eloquent` distro by running `/usr/bin/bloom-release --rosdistro eloquent --track eloquent sick_scan2` on `Thu, 22 Oct 2020 12:06:08 -0000`
