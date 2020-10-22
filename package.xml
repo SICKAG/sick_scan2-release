@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>sick_scan2</name>
-  <version>0.1.8</version>
+  <version>0.1.9</version>
   <description>
     A ROS2 driver for the SICK TiM series of laser scanners.
     This package is based on the sick_scan-Repository.
@@ -22,6 +22,7 @@
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
   <depend>tf2</depend>
+  <depend>tf2_ros</depend>
   <depend>std_msgs</depend>
   <depend condition="$BUILD_WITH_LDMRS_SUPPORT == True">libsick_ldmrs</depend>
 
