@@ -70,6 +70,9 @@
 
 #endif
 
+#if defined LDMRS_SUPPORT && LDMRS_SUPPORT > 0
+#include <sick_scan/ldmrs/sick_ldmrs_node.h>
+#endif
 #include <sick_scan/sick_generic_laser.h>
 #include <sick_scan/sick_scan_common_tcp.h>
 
@@ -84,6 +87,18 @@
 #include "string"
 #include <stdio.h>
 #include <stdlib.h>
+
+static std::shared_ptr<rclcpp::Node> mainNode = NULL;
+
+void setMainNode(std::shared_ptr<rclcpp::Node> _tmpNode)
+{
+  mainNode = _tmpNode;
+}
+
+std::shared_ptr<rclcpp::Node> getMainNode(void)
+{
+  return (mainNode);
+}
 
 /*!
 \brief splitting expressions like <tag>:=<value> into <tag> and <value>
@@ -138,75 +153,6 @@ int mainGenericLaser(int argc, char **argv, std::string nodeName)
   bool doInternalDebug = false;
   bool emulSensor = false;
 
-  std::vector<std::string> paramArr;
-  paramArr.push_back("hostname");
-  paramArr.push_back("port");
-  paramArr.push_back("name");
-  paramArr.push_back("frame_id");
-
-
-    std::string scannerName = "sick_tim_5xx";
-    std::string hostname = "192.168.0.61";
-    std::string port = "2112";
-    std::string frame_id="laser";
-
-
-    for (int i = 0; i < argc; i++)
-  {
-    std::string s = argv[i];
-    if (getTagVal(s, tag, val))
-    {
-      if (tag.compare("__internalDebug") == 0)
-      {
-        int debugState = 0;
-        sscanf(val.c_str(), "%d", &debugState);
-        if (debugState > 0)
-        {
-          doInternalDebug = true;
-        }
-      }
-      if (tag.compare("__emulSensor") == 0)
-      {
-        int dummyState = 0;
-        sscanf(val.c_str(), "%d", &dummyState);
-        if (dummyState > 0)
-        {
-          emulSensor = true;
-        }
-      }
-
-      for (int i = 0; i < paramArr.size(); i++)
-      {
-        std::string callParamName = std::string("__");
-        callParamName +=  paramArr[i];
-        if (tag.compare(callParamName) == 0)
-        {
-          node->declare_parameter(paramArr[i], val);
-          std::string s = "Set param " + paramArr[i] + " to " + val;
-          RCLCPP_INFO(node->get_logger(),s.c_str());
-
-          // hacky - will be changed ...
-          if (paramArr[i].compare("hostname") == 0)
-          {
-            hostname = val;
-          }
-          if (paramArr[i].compare("port") == 0)
-          {
-            port = val;
-          }
-          if (paramArr[i].compare("name") == 0)
-          {
-            scannerName = val;
-          }
-          if (paramArr[i].compare("frame_id") == 0)
-          {
-            frame_id = val;
-          }
-        }
-      }
-    }
-  }
-
 
 #if TODO
   if (false == nhPriv.getParam("scanner_type", scannerName))
@@ -226,13 +172,16 @@ int mainGenericLaser(int argc, char **argv, std::string nodeName)
   }
 
   bool useTCP = true;
-
+/*
   std::map<std::string,std::string> paramTagValMap;
 
   paramTagValMap["name"] = scannerName;
   paramTagValMap["hostname"] = hostname;
   paramTagValMap["port"] = port;
   paramTagValMap["frame_id"] = frame_id;
+
+  //paramTagValMap["min_ang"] = -M_PI;
+  //paramTagValMap["max_ang"] = M_PI;
 
   for(std::map<std::string,std::string>::iterator iter = paramTagValMap.begin(); iter != paramTagValMap.end(); ++iter)
   {
@@ -243,7 +192,20 @@ int mainGenericLaser(int argc, char **argv, std::string nodeName)
       node->declare_parameter(paramName, iter->second);
     }
   }
+*/
 
+  std::string frameId = "world";
+  std::string hostName = "192.168.0.1";
+  std::string scannerName = "undefined";
+  int port = 2112;
+  double min_ang=-M_PI;
+  double max_ang=M_PI;
+  node->get_parameter("frame_id", frameId);
+  node->get_parameter("hostname", hostName);
+  node->get_parameter("scanner_name", scannerName);
+  node->get_parameter("port", port);
+  node->get_parameter("min_ang", min_ang);
+  node->get_parameter("max_ang", max_ang);
   int timelimit = 5;
 #if TODO
   if (nhPriv.getParam("hostname", hostname))
@@ -264,9 +226,37 @@ int mainGenericLaser(int argc, char **argv, std::string nodeName)
 
   signal(SIGINT, h_sig_sigint); // just a workaround - use two ctrl-c :-(
 
+  if(scannerName == "sick_ldmrs")
+  {
+#if defined LDMRS_SUPPORT && LDMRS_SUPPORT > 0
+    RCLCPP_INFO(node->get_logger(), "Initializing LDMRS...");
+    sick_scan::SickLdmrsNode ldmrs;
+    int result = ldmrs.init(node, hostName, frameId);
+    if(result != sick_scan::ExitSuccess)
+    {
+      RCLCPP_ERROR(node->get_logger(), "LDMRS initialization failed.");
+      return sick_scan::ExitError;
+    }
+    RCLCPP_INFO(node->get_logger(), "LDMRS initialized.");
+    rclcpp::spin(node);
+    return sick_scan::ExitSuccess;
+#else
+    RCLCPP_ERROR(node->get_logger(), "LDMRS not supported. Please build sick_scan2 with option LDMRS_SUPPORT");
+    return sick_scan::ExitError;
+#endif    
+  }
 
-  sick_scan::SickGenericParser *parser = new sick_scan::SickGenericParser(scannerName);
-
+  sick_scan::SickGenericParser *parser = 0;
+  try
+  {
+    parser = new sick_scan::SickGenericParser(scannerName);
+  }
+  catch(const std::exception& e)
+  {
+    RCLCPP_ERROR(node->get_logger(), "Scanner \"%s\" not supported, exception \"%s\". Please check your sick_scan2 configuration and launch file.", scannerName.c_str(), e.what());
+    return sick_scan::ExitError;
+  }
+  
 
   double param;
   char colaDialectId = 'A'; // A or B (Ascii or Binary)
@@ -346,10 +336,10 @@ int mainGenericLaser(int argc, char **argv, std::string nodeName)
         delete s;  // disconnect scanner
         if (useTCP)
         {
-          RCLCPP_INFO(node->get_logger(),"hostname: %s", hostname.c_str());
-          RCLCPP_INFO(node->get_logger(),"Port    : %s", port.c_str());
+          RCLCPP_INFO(node->get_logger(),"hostname: %s", hostName.c_str());
+          RCLCPP_INFO(node->get_logger(),"Port    : %d", port);
 
-          s = new sick_scan::SickScanCommonTcp(hostname, port, timelimit, parser, colaDialectId);
+          s = new sick_scan::SickScanCommonTcp(hostName, port, timelimit, parser, colaDialectId);
         }
         else
         {

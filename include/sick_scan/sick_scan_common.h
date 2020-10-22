@@ -54,6 +54,7 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <std_msgs/msg/string.h>
+#include <sensor_msgs/msg/imu.hpp>
 
 #define USE_DIAG (0)
 
@@ -74,6 +75,10 @@
 
 #include "sick_scan/sick_generic_parser.h"
 #include "sick_scan/sick_scan_common_nw.h"
+
+void swap_endian(unsigned char *ptr, int numBytes);
+std::string stripControl(std::vector<unsigned char> s);
+std::string stripControl(std::string s);
 
 namespace sick_scan
 {
@@ -160,13 +165,6 @@ namespace sick_scan
 			//
 			CMD_END // CMD_END is a tag for end of enum - never (re-)move it. It must be the last element.
 		};
-// --- START KEYWORD DEFINITIONS ---
-#define PARAM_MIN_ANG "min_ang"
-#define PARAM_MAX_ANG "max_ang"
-#define PARAM_FRAME_ID "frame_id"
-// --- END KEYWORD DEFINITIONS ---
-
-
 		SickScanCommon(SickGenericParser* parser);
 		virtual ~SickScanCommon();
 
@@ -250,14 +248,18 @@ namespace sick_scan
 				/* FÜR MRS10000 brauchen wir einen Publish und eine NAchricht */
 				// Should we publish laser or point cloud?
 				// ros::Publisher cloud_pub_;
-                rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_pub_;
-                rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_radar_rawtarget_pub_;
-                rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_radar_track_pub_;
-                rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr radarScan_pub_;
+				rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_pub_;
+				rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_radar_rawtarget_pub_;
+				rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_radar_track_pub_;
+				rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr radarScan_pub_;
 				// sensor_msgs::PointCloud cloud_;
-                sensor_msgs::msg::PointCloud2 cloud_;
-		//////
+				sensor_msgs::msg::PointCloud2 cloud_;
 
+				rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr  imuScan_pub_;
+    //rclcpp::Logger node_logger_;
+		//////
+    // Dynamic Reconfigure
+    SickScanConfig config_;
 		protected:
 		virtual int init_device() = 0;
 		virtual int init_scanner();
@@ -313,8 +315,6 @@ namespace sick_scan
 //		diagnostic_updater::Updater diagnostics_;
 
 
-		// Dynamic Reconfigure
-		SickScanConfig config_;
 
 	private:
 		SopasProtocol m_protocolId;
